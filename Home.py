@@ -133,7 +133,7 @@ if len(data) > 0:
         pickable=True,
         opacity=0.8,
         stroked=True,
-        filled=True,
+        filled=False,
         radius_scale=6,
         radius_min_pixels=1,
         radius_max_pixels=1000,
@@ -141,7 +141,7 @@ if len(data) > 0:
         get_position="coordinates",
         get_radius="radius",
         get_fill_color=[255, 140, 0],
-        get_line_color=[0, 0, 0],
+        get_line_color=[255, 140, 0],
     )
 
     # Set the viewport location
@@ -151,4 +151,5 @@ if len(data) > 0:
     r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{place} ({frequency})"})
     # r.to_html("scatterplot_layer.html")
     st.pydeck_chart(r)
-    dataframe_expander.dataframe(final_df)
+    # display_res = res["Last", "First", "Description"]
+    dataframe_expander.dataframe(res)
