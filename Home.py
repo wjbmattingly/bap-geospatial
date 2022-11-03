@@ -8,6 +8,7 @@ import math
 import json
 import datetime
 import dateparser
+import copy
 
 
 pd.set_option('display.max_colwidth', 0)
@@ -27,16 +28,66 @@ def grab_uniques(df, column):
     return items
 @st.cache(allow_output_mutation=True)
 def load_data():
-    df = pd.read_csv("data/data_dates.csv")
-    df = df[:2000]
-    orgs = grab_uniques(df, "ORG")
-    places = grab_uniques(df, "Place")
-    homelands = grab_uniques(df, "Homeland")
-    provinces = grab_uniques(df, "Province")
-    hrvs = grab_uniques(df, "HRV")
-    return df, orgs, places, homelands, provinces, hrvs
+    df = pd.read_csv("data/data_cleaned.csv")
+    # df = df[:1000]
+    df = df[df['place'].notna()]
+    df = df[df['long'].notna()]
+    df = df[df['lat'].notna()]
+    df.index = df.object_id
+    orgs = grab_uniques(df, "org")
+    places = grab_uniques(df, "place")
+    homelands = grab_uniques(df, "homeland")
+    provinces = grab_uniques(df, "province")
+    hrvs = grab_uniques(df, "hrv")
 
-df, orgs, places, homelands, provinces, hrvs = load_data()
+    data = []
+    dates_only = []
+    for idx, row in df.iterrows():
+        if "-" not in str(row.long):
+            # try:
+            # st.write(row.dates)
+            # if dates_checkbox:
+            if pd.isnull(row.date):
+                # if dates_checkbox == False:
+                name = f"{row.full_name}"
+                coords = [float(row.long), float(row.lat)]
+                place = row.place
+                description = row.description
+                data.append({"name": str(name),
+                "place": str(place),
+                "description": str(description),
+                "coordinates": coords,
+                "date": "Date: " + "Unknown",
+                "id": row.object_id})
+                # pass
+            else:
+
+                dates = row.date.split("|")
+                # st.write(dates)
+                for date in dates:
+                    date = dateparser.parse(date)
+                    if date != None:
+                        date = date.date()
+                        # if (dates_checkbox==False) or (date > start_date and date < end_date):
+                        if pd.isnull(row.long) or pd.isnull(row.lat):
+                            pass
+                        else:
+                            name = f"{row.full_name}"
+                            coords = [float(row.long), float(row.lat)]
+                            place = row.place
+                            description = row.description
+                            temp = {"name": str(name),
+                            "place": str(place),
+                            "description": str(description),
+                            "coordinates": coords,
+                            "date": "Date: " + str(date),
+                            "date_time": date,
+                            "id": row.object_id}
+                            data.append(temp)
+                            dates_only.append(temp)
+    return df, orgs, places, homelands, provinces, hrvs, data, dates_only
+
+df, orgs, places, homelands, provinces, hrvs, full_data, dates_only = load_data()
 
 # param_columns = st.columns(2)
 # layers_option = param_columns[0].checkbox("Multiple Layers?", )
@@ -69,67 +120,41 @@ else:
     end_date = 0
 res = df
 if selected_orgs:
-    res = df.loc[df.ORG.isin(selected_orgs)]
+    res = df.loc[df.org.isin(selected_orgs)]
 if selected_places:
-    res = res.loc[res.Place.isin(selected_places)]
+    res = res.loc[res.place.isin(selected_places)]
 if selected_homelands:
-    res = res.loc[res.Homeland.isin(selected_homelands)]
+    res = res.loc[res.homeland.isin(selected_homelands)]
 if selected_provinces:
-    res = res.loc[res.Province.isin(selected_provinces)]
+    res = res.loc[res.province.isin(selected_provinces)]
 if selected_hrvs:
-    res = res.loc[res.HRV.isin(selected_hrvs)]
-data = []
-for idx, row in res.iterrows():
-    # try:
-    # st.write(row.dates)
-    # if dates_checkbox:
-    if pd.isnull(row.dates):
-        if dates_checkbox == False:
-            name = f"{row.First} {row.Last}"
-            coords = [float(row.Long), float(row.Lat)]
-            place = row.Place
-            description = row.Description
-            data.append({"name": name,
-            "place": place,
-            "description": description,
-            "coordinates": coords,
-            "date": "Date: " + "Unknown"})
-        # pass
-    else:
+    res = res.loc[res.hrv.isin(selected_hrvs)]
 
-        dates = row.dates.split("|")
-        # st.write(dates)
-        for date in dates:
-            date = dateparser.parse(date).date()
-            if (dates_checkbox==False) or (date > start_date and date < end_date):
-                name = f"{row.First} {row.Last}"
-                coords = [float(row.Long), float(row.Lat)]
-                place = row.Place
-                description = row.Description
-                if pd.isnull(row.Long):
-                    pass
-                else:
-
-                    data.append({"name": name,
-                    "place": place,
-                    "description": description,
-                    "coordinates": coords,
-                    "date": "Date: " + str(date)})
-
-
-    # except:
-    #     Exception
+hit_ids = res.object_id.tolist()
+# st.write(hit_ids)
+# st.write(dates_only[0])
+if dates_checkbox:
+    data = []
+    for item in dates_only:
+        if "date_time" in item and item["id"] in hit_ids:
+            if item["date_time"] > start_date and item["date_time"] < end_date:
+                data.append(copy.copy(item))
+    for item in data:
+        item.pop("date_time")
+else:
+    data = [copy.copy(item) for item in full_data if item["id"] in hit_ids]
+    for item in data:
+        if "date_time" in item:
+            item.pop("date_time")
+    # st.write(data[0])
 hits_container.write(f"Total Hits: {len(data)}")
 cols2 = st.columns(2)
 if len(data) > 0:
-    with open("temp.json", "w") as f:
-        json.dump(data, f, indent=4)
-
-    final_df = pd.read_json("temp.json")
-
+    final_df = pd.DataFrame(data)
+    final_df = final_df[["place", "coordinates"]]
     final_df['frequency'] = final_df['place'].map(final_df['place'].value_counts())
-    final_df["radius"] = final_df["frequency"].apply(lambda quantity: quantity*100)
-    # Define a layer to display on a map
+    final_df["radius"] = final_df["frequency"].apply(lambda quantity: quantity*10)
+
     layer = pdk.Layer(
         "ScatterplotLayer",
         final_df,
