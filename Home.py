@@ -9,6 +9,8 @@ import json
 import datetime
 import dateparser
 import copy
+from itertools import chain
+from collections import Counter
 
 
 pd.set_option('display.max_colwidth', 0)
@@ -152,8 +154,18 @@ if len(res) > 0:
     if len(data) > 0:
         final_data = json.loads(data[["place", "coordinates"]].to_json())
         final_df = pd.DataFrame(final_data)
+
+
+        places = final_df.place.tolist()
+        frequencies = Counter(chain.from_iterable(places))
+        final_df["frequency"] = 1
+        for idx, row in final_df.iterrows():
+            final_df.at[idx, "frequency"] = frequencies[row.place[0]]
+            # st.write(row.frequency)
+
+        # st.write(final_df)
         # final_df['frequency'] = final_df['place'].map(final_df['place'].value_counts())
-        # final_df["radius"] = final_df["frequency"].apply(lambda quantity: quantity*10)
+        final_df["radius"] = final_df["frequency"].apply(lambda quantity: quantity*10)
 
         layer = pdk.Layer(
             "ScatterplotLayer",
@@ -167,7 +179,7 @@ if len(res) > 0:
             radius_max_pixels=1000,
             line_width_min_pixels=5,
             get_position="coordinates",
-            # get_radius="radius",
+            get_radius="radius",
             get_fill_color=[255, 140, 0],
             get_line_color=[255, 140, 0],
         )
@@ -177,9 +189,9 @@ if len(res) > 0:
 
         # Render
         r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{place} ({frequency})"})
-        # r.to_html("scatterplot_layer.html")
+
         st.pydeck_chart(r)
-        # display_res = res["Last", "First", "Description"]
+
         dataframe_expander.dataframe(res)
 else:
     st.markdown("**There are no matches**")
