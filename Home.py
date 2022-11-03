@@ -13,7 +13,7 @@ import dateparser
 pd.set_option('display.max_colwidth', 0)
 st.set_page_config(layout="wide")
 
-st.title("BAP SAHA-Infocom Map")
+# st.title("BAP SAHA-Infocom Map")
 def grab_uniques(df, column):
     items = []
     for idx, row in df.iterrows():
@@ -148,7 +148,7 @@ if len(data) > 0:
     )
 
     # Set the viewport location
-    view_state = pdk.ViewState(longitude=25.975520, latitude=-30.50329, zoom=5, bearing=0, pitch=0)
+    view_state = pdk.ViewState(longitude=25.975520, latitude=-30.50329, zoom=5, bearing=0, pitch=0, height=1000)
 
     # Render
     r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{place} ({frequency})"})
