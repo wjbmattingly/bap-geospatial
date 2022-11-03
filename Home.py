@@ -33,9 +33,10 @@ def load_data():
     places = grab_uniques(df, "Place")
     homelands = grab_uniques(df, "Homeland")
     provinces = grab_uniques(df, "Province")
-    return df, orgs, places, homelands, provinces
+    hrvs = grab_uniques(df, "HRV")
+    return df, orgs, places, homelands, provinces, hrvs
 
-df, orgs, places, homelands, provinces = load_data()
+df, orgs, places, homelands, provinces, hrvs = load_data()
 
 # param_columns = st.columns(2)
 # layers_option = param_columns[0].checkbox("Multiple Layers?", )
@@ -49,7 +50,7 @@ selected_orgs = st.sidebar.multiselect("Select Organization(s)", orgs)
 selected_places = st.sidebar.multiselect("Select Place(s)", places)
 selected_homelands = st.sidebar.multiselect("Select Homeland(s)", homelands)
 selected_provinces = st.sidebar.multiselect("Select Province(s)", provinces)
-
+selected_hrvs = st.sidebar.multiselect("Select HRV(s)", hrvs)
 
 dates_checkbox = st.sidebar.checkbox("Use Dates?")
 cols = st.sidebar.columns(2)
@@ -75,6 +76,8 @@ if selected_homelands:
     res = res.loc[res.Homeland.isin(selected_homelands)]
 if selected_provinces:
     res = res.loc[res.Province.isin(selected_provinces)]
+if selected_hrvs:
+    res = res.loc[res.HRV.isin(selected_hrvs)]
 data = []
 for idx, row in res.iterrows():
     # try:
@@ -137,7 +140,7 @@ if len(data) > 0:
         radius_scale=6,
         radius_min_pixels=1,
         radius_max_pixels=1000,
-        line_width_min_pixels=1,
+        line_width_min_pixels=5,
         get_position="coordinates",
         get_radius="radius",
         get_fill_color=[255, 140, 0],
