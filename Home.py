@@ -188,9 +188,9 @@ if st.sidebar.button("Create Map and Data"):
                 if layer == 0:
                     line_color=[255, 140, 0]
                 elif layer == 1:
-                    line_color = [0, 50, 0]
+                    line_color = [0, 2442, 255]
                 elif layer == 2:
-                    line_color = [150, 50, 25]
+                    line_color = [140, 0, 255]
 
                 layer = pdk.Layer(
                     "ScatterplotLayer",
