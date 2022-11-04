@@ -135,7 +135,7 @@ dataframe_expander = st.expander("Open to Examine the Data")
 # else:
 #     start_date = 0
 #     end_date = 0
-
+layer_res = []
 if st.sidebar.button("Create Map and Data"):
     layer_data = []
     for layer in range(layer_nums):
@@ -155,6 +155,7 @@ if st.sidebar.button("Create Map and Data"):
             # res = res.loc[res.province.isin(selected_provinces)]
         if selected_hrvs:
             res = filter_df(res, "hrv", selections[layer]["selected_hrvs"])
+        layer_res.append(res)
             # res = res.loc[res.hrv.isin(selected_hrvs)]
 
         # metadata_connections = get_output_data(res)
@@ -216,7 +217,8 @@ if st.sidebar.button("Create Map and Data"):
     r = pdk.Deck(layers=layer_data, initial_view_state=view_state, tooltip={"text": "{place} ({frequency})"})
 
     st.pydeck_chart(r)
-
-    dataframe_expander.dataframe(res)
+    for i, res in enumerate(layer_res):
+        dataframe_expander.header(f"Data for Layer {i+1}")
+        dataframe_expander.dataframe(res)
 else:
     st.markdown("**There are no matches**")
